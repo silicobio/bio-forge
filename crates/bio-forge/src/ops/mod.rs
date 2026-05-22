@@ -8,6 +8,7 @@
 mod clean;
 mod error;
 mod hydro;
+mod relax;
 mod repair;
 mod solvate;
 mod topology;
@@ -18,6 +19,8 @@ pub use clean::{CleanConfig, clean_structure};
 pub use repair::repair_structure;
 
 pub use hydro::{HisStrategy, HydroConfig, add_hydrogens};
+
+pub use relax::{RelaxConfig, RelaxResult, relax_structure};
 
 pub use solvate::{Anion, Cation, SolvateConfig, solvate_structure};
 

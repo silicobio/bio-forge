@@ -52,6 +52,10 @@ pub enum Error {
         res_id: i32,
         atom_name: String,
     },
+
+    /// The structure contains no movable atoms for the requested relaxation scope.
+    #[error("no movable atoms found for relaxation (scope: {scope})")]
+    NoMovableAtoms { scope: String },
 }
 
 impl Error {
