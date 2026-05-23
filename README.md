@@ -1,6 +1,6 @@
 <h1><img src="https://raw.githubusercontent.com/TKanX/bio-forge/main/assets/logo.svg" alt="BioForge Logo" width="50em"> BioForge</h1>
 
-**BioForge** is a pure-Rust toolkit for automated preparation of biological macromolecules. It reads experimental structures (PDB/mmCIF), reconciles them with high-quality residue templates, repairs missing atoms, assigns hydrogens and termini, builds topologies, and optionally solvates the system with water and ions—all without leaving the Rust type system.
+**BioForge** is a pure-Rust toolkit for automated preparation of biological macromolecules. It reads experimental structures (PDB/mmCIF), reconciles them with high-quality residue templates, repairs missing atoms, assigns hydrogens and termini, relaxes coordinates, builds topologies, and optionally solvates the system with water and ions—all without leaving the Rust type system.
 
 ## Highlights
 
@@ -8,23 +8,24 @@
 - **High performance** – Multithreaded processing (via rayon) handles million-atom systems in milliseconds; single-pass parsing, in-place mutation, and zero-copy serialization minimize overhead.
 - **Rich structure model** – Lightweight `Atom`, `Residue`, `Chain`, and `Structure` types backed by `nalgebra` make geometric operations trivial.
 - **Format interoperability** – Buffered readers/writers for PDB, mmCIF, and MOL2 plus error types that surface precise parsing diagnostics.
-- **Preparation pipeline** – Cleaning, repairing, protonating, solvation, coordinate transforms, and topology reconstruction share a common `ops::Error` so workflows compose cleanly.
+- **Preparation pipeline** – Cleaning, repairing, protonating, relaxation, solvation, coordinate transforms, and topology reconstruction share a common `ops::Error` so workflows compose cleanly.
 - **WebAssembly support** – Full-featured WASM bindings for modern JavaScript bundlers (Vite, webpack, Rollup); ideal for browser-based molecular viewers and web applications.
 - **Rust-first ergonomics** – No FFI, no global mutable state beyond the lazily-loaded template store, and edition 2024 guarantees modern language features.
 
 ## Processing Pipeline
 
 ```
-Load → Clean → Repair → Hydrogenate → Solvate → Topology → Write
+Load → Clean → Repair → Hydrogenate → Relax → Solvate → Topology → Write
 ```
 
 1. **Load** – `io::read_pdb_structure` or `io::read_mmcif_structure` parses coordinates with `IoContext` alias resolution.
 2. **Clean** – `ops::clean_structure` removes waters, ions, hetero residues, or arbitrary residue names via `CleanConfig`.
 3. **Repair** – `ops::repair_structure` realigns residues to templates and rebuilds missing heavy atoms (OXT on C-termini, OP3 on 5'-phosphorylated nucleic acids).
 4. **Hydrogenate** – `ops::add_hydrogens` infers protonation states (configurable pH, histidine strategy, and salt bridge detection) and reconstructs hydrogens from template anchors.
-5. **Solvate** – `ops::solvate_structure` creates a periodic box, packs water on a configurable lattice, and swaps molecules for ions to satisfy a target charge.
-6. **Topology** – `ops::TopologyBuilder` emits bond connectivity with peptide-link detection, nucleic backbone connectivity, and disulfide heuristics.
-7. **Write** – `io::write_pdb_structure` / `io::write_mmcif_structure` serialize the processed structure; `write_*_topology` helpers emit CONECT or `struct_conn` records.
+5. **Relax** – `ops::relax_structure` performs a simplified AMBER-like minimization to reduce clashes before downstream processing.
+6. **Solvate** – `ops::solvate_structure` creates a periodic box, packs water on a configurable lattice, and swaps molecules for ions to satisfy a target charge.
+7. **Topology** – `ops::TopologyBuilder` emits bond connectivity with peptide-link detection, nucleic backbone connectivity, and disulfide heuristics.
+8. **Write** – `io::write_pdb_structure` / `io::write_mmcif_structure` serialize the processed structure; `write_*_topology` helpers emit CONECT or `struct_conn` records.
 
 ## Quick Start
 
@@ -66,8 +67,8 @@ use bio_forge::{
         IoContext,
     },
     ops::{
-        add_hydrogens, clean_structure, repair_structure, solvate_structure,
-        CleanConfig, HydroConfig, SolvateConfig, TopologyBuilder,
+        add_hydrogens, clean_structure, relax_structure, repair_structure, solvate_structure,
+        CleanConfig, HydroConfig, RelaxConfig, SolvateConfig, TopologyBuilder,
     },
 };
 
@@ -79,6 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     clean_structure(&mut structure, &CleanConfig::water_only())?;
     repair_structure(&mut structure)?;
     add_hydrogens(&mut structure, &HydroConfig::default())?;
+    relax_structure(&mut structure, &RelaxConfig::default())?;
     solvate_structure(&mut structure, &SolvateConfig::default())?;
 
     let topology = TopologyBuilder::new().build(structure.clone())?;
@@ -112,6 +114,7 @@ const structure = Structure.fromPdb(pdb);
 structure.clean({ removeWater: true });
 structure.repair();
 structure.addHydrogens({ hisStrategy: "network" });
+structure.relax();
 
 const topology = structure.toTopology();
 console.log(`Bonds: ${topology.bondCount}`);

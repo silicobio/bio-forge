@@ -8,6 +8,7 @@ import type {
   CleanConfig,
   HydroConfig,
   HisStrategy,
+  RelaxConfig,
   SolvateConfig,
   TopologyConfig,
   CationSpecies,
@@ -71,6 +72,31 @@ export function toHydroConfig(settings: HydroSettings): HydroConfig {
     hisStrategy: settings.hisStrategy,
     hisSaltBridgeProtonation: settings.hisSaltBridgeProtonation,
   };
+}
+
+// ============================================================================
+// Relax Configuration
+// ============================================================================
+
+/** Full relax configuration with all fields required */
+export interface RelaxSettings {
+  maxSteps: number;
+  sideChainsOnly: boolean;
+  convergence: number;
+  vdwCutoff: number;
+}
+
+/** Default relax settings */
+export const DEFAULT_RELAX_SETTINGS: RelaxSettings = {
+  maxSteps: 200,
+  sideChainsOnly: true,
+  convergence: 1.0,
+  vdwCutoff: 10.0,
+};
+
+/** Convert settings to WASM config */
+export function toRelaxConfig(settings: RelaxSettings): RelaxConfig {
+  return { ...settings };
 }
 
 // ============================================================================
@@ -142,6 +168,7 @@ export function toTopologyConfig(settings: TopologySettings): TopologyConfig {
 export interface PipelineConfig {
   clean: { enabled: boolean; settings: CleanSettings };
   repair: { enabled: boolean };
+  relax: { enabled: boolean; settings: RelaxSettings };
   hydro: { enabled: boolean; settings: HydroSettings };
   solvate: { enabled: boolean; settings: SolvateSettings };
   topology: { enabled: boolean; settings: TopologySettings };
@@ -151,10 +178,17 @@ export interface PipelineConfig {
 export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
   clean: { enabled: true, settings: DEFAULT_CLEAN_SETTINGS },
   repair: { enabled: true },
+  relax: { enabled: false, settings: DEFAULT_RELAX_SETTINGS },
   hydro: { enabled: false, settings: DEFAULT_HYDRO_SETTINGS },
   solvate: { enabled: false, settings: DEFAULT_SOLVATE_SETTINGS },
   topology: { enabled: false, settings: DEFAULT_TOPOLOGY_SETTINGS },
 };
 
-export type { CleanConfig, HydroConfig, SolvateConfig, TopologyConfig };
+export type {
+  CleanConfig,
+  HydroConfig,
+  RelaxConfig,
+  SolvateConfig,
+  TopologyConfig,
+};
 export type { HisStrategy, CationSpecies, AnionSpecies };

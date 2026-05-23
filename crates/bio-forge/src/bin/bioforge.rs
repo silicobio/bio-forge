@@ -6,7 +6,7 @@ use clap::{Parser, Subcommand};
 mod commands;
 
 use commands::{IoParameters, StructureFormat};
-use commands::{clean, hydro, info, repair, solvate, topology, transform};
+use commands::{clean, hydro, info, relax, repair, solvate, topology, transform};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -49,6 +49,8 @@ enum Command {
     Transform(transform::TransformArgs),
     /// Build an explicit bonding topology.
     Topology(topology::TopologyArgs),
+    /// Relax side chains or whole structure using a simplified AMBER-like energy function.
+    Relax(relax::RelaxArgs),
 }
 
 fn main() -> Result<()> {
@@ -102,6 +104,12 @@ fn main() -> Result<()> {
             commands::ensure_noninteractive_stdout("transform", &io_params)?;
             let (mut structure, _) = commands::load_input(&io_params)?;
             transform::run(&mut structure, &args)?;
+            commands::save_output(&structure, &io_params)?;
+        }
+        Command::Relax(args) => {
+            commands::ensure_noninteractive_stdout("relax", &io_params)?;
+            let (mut structure, _) = commands::load_input(&io_params)?;
+            relax::run(&mut structure, &args)?;
             commands::save_output(&structure, &io_params)?;
         }
     }

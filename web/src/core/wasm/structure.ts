@@ -11,6 +11,7 @@ import type {
   StructureInfo,
   CleanConfig,
   HydroConfig,
+  RelaxConfig,
   SolvateConfig,
   TopologyConfig,
 } from "./types";
@@ -61,6 +62,19 @@ export function addHydrogens(
   config: HydroConfig
 ): void {
   structure.addHydrogens(config);
+}
+
+/**
+ * Relax structure coordinates.
+ *
+ * @param structure - WASM structure instance (mutated in place)
+ * @param config - Relaxation configuration
+ */
+export function relaxStructure(
+  structure: WasmStructure,
+  config?: RelaxConfig
+): void {
+  structure.relax(config);
 }
 
 /**

@@ -20,6 +20,7 @@ use bio_forge::{ResidueCategory, Structure, Topology};
 pub mod clean;
 pub mod hydro;
 pub mod info;
+pub mod relax;
 pub mod repair;
 pub mod solvate;
 pub mod topology;

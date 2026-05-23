@@ -1,6 +1,6 @@
 # BioForge CLI Manual
 
-BioForge ships with a composable command-line interface that mirrors the library pipeline: ingest structures, clean and repair them, add hydrogens, solvate, transform, and emit both coordinates and explicit topologies. This document explains the command surface in detail and provides examples so you can adopt the CLI confidently in scripts or interactive shells.
+BioForge ships with a composable command-line interface that mirrors the library pipeline: ingest structures, clean and repair them, add hydrogens, relax coordinates, solvate, transform, and emit both coordinates and explicit topologies. This document explains the command surface in detail and provides examples so you can adopt the CLI confidently in scripts or interactive shells.
 
 ---
 
@@ -98,10 +98,29 @@ Options:
 | `--his <hid\|hie\|random\|network>` | Histidine tautomer strategy. Defaults to `network` (hydrogen-bond-aware).                        |
 | `--no-his-salt-bridge`              | Disable salt bridge detection for HIS → HIP conversion near carboxylate groups (ASP⁻/GLU⁻/COO⁻). |
 
+### `relax` – Minimize side-chain or whole-structure energy
+
+```bash
+bioforge relax -i protonated.pdb -o relaxed.pdb --steps 300 --convergence 0.8
+```
+
+- Performs simplified AMBER-like steepest-descent minimization.
+- By default only protein side-chain heavy atoms move; backbone and non-standard residues remain fixed.
+- Use `--full` to also relax backbone heavy atoms of standard residues.
+
+Options:
+
+| Flag                     | Purpose                                                                    |
+| ------------------------ | -------------------------------------------------------------------------- |
+| `--full`                 | Relax all standard-residue heavy atoms (not only side chains).            |
+| `--steps <int>`          | Maximum steepest-descent iterations (default 200).                        |
+| `--convergence <float>`  | RMS-gradient convergence threshold in kcal mol⁻¹ Å⁻¹ (default 1.0).       |
+| `--vdw-cutoff <float>`   | Lennard-Jones non-bonded cutoff distance in Å (default 10.0).             |
+
 ### `solvate` – Build a solvent box and add ions
 
 ```bash
-bioforge solvate -i protonated.pdb -o solvated.pdb --margin 12 --spacing 3.0 --cation Na --anion Cl --neutralize --seed 42
+bioforge solvate -i relaxed.pdb -o solvated.pdb --margin 12 --spacing 3.0 --cation Na --anion Cl --neutralize --seed 42
 ```
 
 Options:

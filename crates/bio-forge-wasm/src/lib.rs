@@ -10,9 +10,11 @@ use bio_forge::io::{
 use bio_forge::ops::{
     Anion as CoreAnion, Cation as CoreCation, CleanConfig as CoreCleanConfig,
     HisStrategy as CoreHisStrategy, HydroConfig as CoreHydroConfig,
-    SolvateConfig as CoreSolvateConfig, TopologyBuilder, Transform as CoreTransform,
+    RelaxConfig as CoreRelaxConfig, SolvateConfig as CoreSolvateConfig, TopologyBuilder,
+    Transform as CoreTransform,
     add_hydrogens as core_add_hydrogens, clean_structure as core_clean_structure,
-    repair_structure as core_repair_structure, solvate_structure as core_solvate_structure,
+    relax_structure as core_relax_structure, repair_structure as core_repair_structure,
+    solvate_structure as core_solvate_structure,
 };
 use bio_forge::{
     Chain as CoreChain, ResidueCategory, StandardResidue, Structure as CoreStructure,
@@ -251,6 +253,61 @@ impl From<SolvateConfig> for CoreSolvateConfig {
             anions,
             target_charge: cfg.target_charge,
             rng_seed: cfg.rng_seed,
+        }
+    }
+}
+
+// ============================================================================
+// Configuration: RelaxConfig
+// ============================================================================
+
+/// Configuration for coordinate relaxation.
+#[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+#[serde(rename_all = "camelCase")]
+pub struct RelaxConfig {
+    /// Maximum number of steepest-descent minimization steps. Default: `200`
+    #[serde(default = "default_relax_steps")]
+    pub max_steps: u32,
+    /// Relax side chains only (`true`) or full standard-residue heavy atoms (`false`). Default: `true`
+    #[serde(default = "default_true")]
+    pub side_chains_only: bool,
+    /// RMS-gradient convergence threshold (kcal mol⁻¹ Å⁻¹). Default: `1.0`
+    #[serde(default = "default_relax_convergence")]
+    pub convergence: f64,
+    /// Lennard-Jones non-bonded cutoff distance (Å). Default: `10.0`
+    #[serde(default = "default_relax_vdw_cutoff")]
+    pub vdw_cutoff: f64,
+}
+
+fn default_relax_steps() -> u32 {
+    200
+}
+fn default_relax_convergence() -> f64 {
+    1.0
+}
+fn default_relax_vdw_cutoff() -> f64 {
+    10.0
+}
+
+impl Default for RelaxConfig {
+    fn default() -> Self {
+        Self {
+            max_steps: default_relax_steps(),
+            side_chains_only: true,
+            convergence: default_relax_convergence(),
+            vdw_cutoff: default_relax_vdw_cutoff(),
+        }
+    }
+}
+
+impl From<RelaxConfig> for CoreRelaxConfig {
+    fn from(cfg: RelaxConfig) -> Self {
+        CoreRelaxConfig {
+            max_steps: cfg.max_steps,
+            side_chains_only: cfg.side_chains_only,
+            convergence: cfg.convergence,
+            vdw_cutoff: cfg.vdw_cutoff,
         }
     }
 }
@@ -597,6 +654,15 @@ impl Structure {
     pub fn solvate(&mut self, config: Option<SolvateConfig>) -> Result<(), JsError> {
         let cfg = config.unwrap_or_default();
         core_solvate_structure(&mut self.inner, &cfg.into()).map_err(to_js_error)
+    }
+
+    /// Relaxes coordinates using a simplified AMBER-like minimization.
+    #[wasm_bindgen]
+    pub fn relax(&mut self, config: Option<RelaxConfig>) -> Result<(), JsError> {
+        let cfg = config.unwrap_or_default();
+        core_relax_structure(&mut self.inner, &cfg.into())
+            .map(|_| ())
+            .map_err(to_js_error)
     }
 
     // -------------------------------------------------------------------------
