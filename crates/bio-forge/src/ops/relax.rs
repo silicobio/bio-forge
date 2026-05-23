@@ -49,6 +49,8 @@ const STEP_GROW: f64 = 1.2;
 const MAX_STEP_SIZE: f64 = 0.10;
 /// Minimum step size before aborting the minimisation (Å).
 const MIN_STEP_SIZE: f64 = 1e-6;
+/// Number of spatial degrees of freedom per atom (x, y, z).
+const SPATIAL_DIMS: usize = 3;
 
 // ─── AMBER ff14SB-derived VDW parameters ─────────────────────────────────────
 
@@ -661,7 +663,7 @@ fn rms_gradient(grad: &[Vector3<f64>], movable: &[bool]) -> f64 {
     for (i, g) in grad.iter().enumerate() {
         if movable[i] {
             sum_sq += g.norm_squared();
-            count += 3;
+            count += SPATIAL_DIMS;
         }
     }
     if count == 0 {
@@ -779,6 +781,18 @@ pub fn relax_structure(
 ) -> Result<RelaxResult, Error> {
     let mut sys = build_system(structure, config);
 
+    // Guard against structures where every atom is fixed.
+    if !sys.movable.iter().any(|&m| m) {
+        let scope = if config.side_chains_only {
+            "side chains"
+        } else {
+            "all heavy atoms"
+        };
+        return Err(Error::NoMovableAtoms {
+            scope: scope.to_string(),
+        });
+    }
+
     let initial_energy = compute_energy(&sys);
     let (steps_taken, converged) = minimize(&mut sys, config);
     let final_energy = compute_energy(&sys);
@@ -830,18 +844,21 @@ mod tests {
     }
 
     #[test]
-    fn relax_empty_structure_returns_zero_energy() {
+    fn relax_empty_structure_returns_no_movable_atoms_error() {
         let mut s = Structure::new();
         let cfg = RelaxConfig::default();
-        let result = relax_structure(&mut s, &cfg).unwrap();
-        assert_eq!(result.initial_energy, 0.0);
-        assert_eq!(result.final_energy, 0.0);
+        let result = relax_structure(&mut s, &cfg);
+        assert!(
+            matches!(result, Err(Error::NoMovableAtoms { .. })),
+            "Expected NoMovableAtoms error for empty structure, got {:?}",
+            result
+        );
     }
 
     #[test]
-    fn relax_no_movable_atoms_does_nothing() {
+    fn relax_no_movable_atoms_returns_error() {
         // A water molecule has no standard residue atoms that are side-chain; should be
-        // treated as fixed.
+        // treated as fixed, returning an error.
         let mut structure = Structure::new();
         let mut chain = Chain::new("A");
         let mut residue = Residue::new(
@@ -859,32 +876,13 @@ mod tests {
         chain.add_residue(residue);
         structure.add_chain(chain);
 
-        let pos_before = structure
-            .iter_chains()
-            .next()
-            .unwrap()
-            .iter_residues()
-            .next()
-            .unwrap()
-            .atom("O")
-            .unwrap()
-            .pos;
-
         let cfg = RelaxConfig::default();
-        relax_structure(&mut structure, &cfg).unwrap();
-
-        let pos_after = structure
-            .iter_chains()
-            .next()
-            .unwrap()
-            .iter_residues()
-            .next()
-            .unwrap()
-            .atom("O")
-            .unwrap()
-            .pos;
-
-        assert_eq!(pos_before, pos_after);
+        let result = relax_structure(&mut structure, &cfg);
+        assert!(
+            matches!(result, Err(Error::NoMovableAtoms { .. })),
+            "Expected NoMovableAtoms error for hetero-only structure, got {:?}",
+            result
+        );
     }
 
     #[test]
@@ -988,6 +986,38 @@ mod tests {
             "Energy should not increase: {} -> {}",
             result.initial_energy,
             result.final_energy
+        );
+    }
+
+    #[test]
+    fn relax_structure_errors_when_no_movable_atoms() {
+        // A structure with only backbone atoms in side-chain-only mode has no movable atoms.
+        let mut structure = Structure::new();
+        let mut chain = Chain::new("A");
+        let mut res = Residue::new(
+            1,
+            None,
+            "GLY",
+            Some(crate::model::types::StandardResidue::GLY),
+            ResidueCategory::Standard,
+        );
+        res.add_atom(Atom::new("N",  Element::N, nalgebra::Point3::new(-0.966, 0.493, 1.500)));
+        res.add_atom(Atom::new("CA", Element::C, nalgebra::Point3::new( 0.257, 0.418, 0.692)));
+        res.add_atom(Atom::new("C",  Element::C, nalgebra::Point3::new(-0.094, 0.017,-0.716)));
+        res.add_atom(Atom::new("O",  Element::O, nalgebra::Point3::new(-1.056,-0.682,-0.923)));
+        chain.add_residue(res);
+        structure.add_chain(chain);
+
+        let cfg = RelaxConfig {
+            side_chains_only: true,
+            ..RelaxConfig::default()
+        };
+
+        let result = relax_structure(&mut structure, &cfg);
+        assert!(
+            matches!(result, Err(Error::NoMovableAtoms { .. })),
+            "Expected NoMovableAtoms error, got {:?}",
+            result
         );
     }
 }

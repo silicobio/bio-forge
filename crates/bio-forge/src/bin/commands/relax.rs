@@ -1,8 +1,8 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::Args;
 
 use bio_forge::Structure;
-use bio_forge::ops::{RelaxConfig, relax_structure};
+use bio_forge::ops::{RelaxConfig, relax_structure, Error as OpError};
 
 use crate::commands::run_with_spinner;
 
@@ -43,7 +43,12 @@ pub fn run(structure: &mut Structure, args: &RelaxArgs) -> Result<()> {
     let message = format!("Relaxing {scope} ({} steps max)", config.max_steps);
 
     let result = run_with_spinner(&message, || {
-        relax_structure(structure, &config).context("Failed to relax structure")
+        relax_structure(structure, &config).map_err(|e| match &e {
+            OpError::NoMovableAtoms { scope } => {
+                anyhow::anyhow!("No movable atoms found for scope '{scope}'. Use --full to include backbone atoms.")
+            }
+            _ => anyhow::Error::new(e).context("Failed to relax structure"),
+        })
     })?;
 
     eprintln!(
