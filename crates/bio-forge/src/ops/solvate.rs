@@ -316,7 +316,7 @@ pub fn solvate_structure(structure: &mut Structure, config: &SolvateConfig) -> R
 
     let mut water_positions = Vec::with_capacity(new_waters.len());
     solvent_chain.reserve(new_waters.len());
-    for (res_id_counter, mut residue) in (1..).zip(new_waters.into_iter()) {
+    for (res_id_counter, mut residue) in (1..).zip(new_waters) {
         residue.id = res_id_counter;
         solvent_chain.add_residue(residue);
         water_positions.push(res_id_counter);
