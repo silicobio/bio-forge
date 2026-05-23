@@ -49,22 +49,26 @@ export function useProcessor() {
   const {
     cleanEnabled,
     repairEnabled,
+    relaxEnabled,
     hydroEnabled,
     solvateEnabled,
     topologyEnabled,
     cleanConfig,
+    relaxConfig,
     hydroConfig,
     solvateConfig,
     topologyConfig,
   } = usePipelineStore(
     useShallow((s) => ({
-      cleanEnabled: s.cleanEnabled,
-      repairEnabled: s.repairEnabled,
-      hydroEnabled: s.hydroEnabled,
-      solvateEnabled: s.solvateEnabled,
-      topologyEnabled: s.topologyEnabled,
-      cleanConfig: s.cleanConfig,
-      hydroConfig: s.hydroConfig,
+        cleanEnabled: s.cleanEnabled,
+        repairEnabled: s.repairEnabled,
+        relaxEnabled: s.relaxEnabled,
+        hydroEnabled: s.hydroEnabled,
+        solvateEnabled: s.solvateEnabled,
+        topologyEnabled: s.topologyEnabled,
+        cleanConfig: s.cleanConfig,
+        relaxConfig: s.relaxConfig,
+        hydroConfig: s.hydroConfig,
       solvateConfig: s.solvateConfig,
       topologyConfig: s.topologyConfig,
     }))
@@ -124,6 +128,7 @@ export function useProcessor() {
     () => ({
       clean: { enabled: cleanEnabled, settings: cleanConfig },
       repair: { enabled: repairEnabled },
+      relax: { enabled: relaxEnabled, settings: relaxConfig },
       hydro: { enabled: hydroEnabled, settings: hydroConfig },
       solvate: { enabled: solvateEnabled, settings: solvateConfig },
       topology: { enabled: topologyEnabled, settings: topologyConfig },
@@ -131,10 +136,12 @@ export function useProcessor() {
     [
       cleanEnabled,
       repairEnabled,
+      relaxEnabled,
       hydroEnabled,
       solvateEnabled,
       topologyEnabled,
       cleanConfig,
+      relaxConfig,
       hydroConfig,
       solvateConfig,
       topologyConfig,
@@ -145,6 +152,7 @@ export function useProcessor() {
   const hasAnyStepEnabled =
     cleanEnabled ||
     repairEnabled ||
+    relaxEnabled ||
     hydroEnabled ||
     solvateEnabled ||
     topologyEnabled;

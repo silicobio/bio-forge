@@ -10,6 +10,7 @@ import { SparklesIcon } from "@/ui/icons";
 import { usePipelineStore } from "@/state";
 import { StepClean } from "./step-clean";
 import { StepRepair } from "./step-repair";
+import { StepRelax } from "./step-relax";
 import { StepHydro } from "./step-hydro";
 import { StepSolvate } from "./step-solvate";
 import { StepTopology } from "./step-topology";
@@ -23,6 +24,7 @@ export function PipelinePanel() {
     (s) =>
       s.cleanEnabled ||
       s.repairEnabled ||
+      s.relaxEnabled ||
       s.hydroEnabled ||
       s.solvateEnabled ||
       s.topologyEnabled
@@ -50,6 +52,7 @@ export function PipelinePanel() {
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         <StepClean />
         <StepRepair />
+        <StepRelax />
         <StepHydro />
         <StepSolvate />
         <StepTopology />

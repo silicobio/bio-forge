@@ -114,6 +114,7 @@ const structure = Structure.fromPdb(pdb);
 structure.clean({ removeWater: true });
 structure.repair();
 structure.addHydrogens({ hisStrategy: "network" });
+structure.relax();
 
 const topology = structure.toTopology();
 console.log(`Bonds: ${topology.bondCount}`);

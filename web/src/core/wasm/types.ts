@@ -11,6 +11,7 @@ export type {
   // Configuration types
   CleanConfig,
   HydroConfig,
+  RelaxConfig,
   SolvateConfig,
   TopologyConfig,
   // Classes

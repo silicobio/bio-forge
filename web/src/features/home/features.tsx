@@ -24,7 +24,7 @@ const features = [
     icon: LayersIcon,
     title: "Complete Pipeline",
     description:
-      "Clean, repair, protonate, solvate, and build topologies—all in one unified workflow.",
+      "Clean, repair, protonate, relax, solvate, and build topologies—all in one unified workflow.",
   },
   {
     icon: BoxIcon,

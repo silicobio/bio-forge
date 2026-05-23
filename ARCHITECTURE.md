@@ -18,7 +18,7 @@ flowchart TD
 - **DB** – The template loader/store that exposes `TemplateView` references to the rest of the crate.
 - **IO** – Parsers and serializers (PDB, mmCIF, MOL2) that hydrate or persist `Structure` instances.
 - **Model** – Neutral data classes (`Atom`, `Residue`, `Chain`, `Structure`, `Topology`) shared across modules.
-- **Ops** – Transformation pipelines that clean, repair, protonate, solvate, and connect structures.
+- **Ops** – Transformation pipelines that clean, repair, protonate, relax, solvate, and connect structures.
 - **Writers** – Emitters that translate the final structure/topology back to biochemical formats.
 
 ## 2. IO and Data Modules
@@ -129,7 +129,26 @@ flowchart TD
   - **5'-terminal nucleic**: HO5' (no phosphate) or HOP3 (phosphate + pH < 6.5)
   - **3'-terminal nucleic**: HO3'
 
-### 3.4 Solvate Pipeline (`ops::solvate`)
+### 3.4 Relax Pipeline (`ops::relax`)
+
+```mermaid
+flowchart TD
+    BuildSystem --> Energy0
+    Energy0 --> Descent
+    Descent --> Convergence{RMS gradient < threshold?}
+    Convergence -->|No| Descent
+    Convergence -->|Yes| WriteBack
+    WriteBack --> EndRelax
+```
+
+- **BuildSystem** – Flattens atom coordinates into a minimization system and marks movable atoms based on configuration (`side_chains_only` vs full heavy-atom relaxation).
+- **Energy0** – Evaluates initial bonded and non-bonded energy terms.
+- **Descent** – Runs steepest-descent updates with bonded angle/bond terms and Lennard-Jones interactions up to `max_steps`.
+- **Convergence** – Stops early when RMS gradient drops below the configured threshold.
+- **WriteBack** – Copies optimized coordinates back into the mutable `Structure`.
+- **EndRelax** – Returns energy summary (`initial_energy`, `final_energy`, `steps_taken`, `converged`).
+
+### 3.5 Solvate Pipeline (`ops::solvate`)
 
 ```mermaid
 flowchart TD
@@ -149,7 +168,7 @@ flowchart TD
 - **ReplaceIons** – Swaps selected waters with ions until the target charge is met, using RNG for distribution and reporting failure if insufficient.
 - **Finalize** – Appends the solvent chain and updates the structure's periodic box.
 
-### 3.5 Topology Builder (`ops::topology`)
+### 3.6 Topology Builder (`ops::topology`)
 
 ```mermaid
 flowchart TD
@@ -169,7 +188,7 @@ flowchart TD
 - **DisulfideScan** – Adds bonds between cystine sulfurs within the disulfide cutoff.
 - **EmitTopology** – Produces the final `Topology` pairing the structure with collected bonds.
 
-### 3.6 Transform Utilities (`ops::transform`)
+### 3.7 Transform Utilities (`ops::transform`)
 
 ```mermaid
 flowchart TD

@@ -21,6 +21,7 @@ const structure = Structure.fromPdb(pdb);
 structure.clean({ removeWater: true });
 structure.repair();
 structure.addHydrogens({ hisStrategy: "network" });
+structure.relax();
 
 const topology = structure.toTopology();
 console.log(`Bonds: ${topology.bondCount}`);
@@ -76,6 +77,7 @@ Main class for molecular structure manipulation.
 | `clean`        | `config?: CleanConfig`   | `void`  | Remove unwanted components |
 | `repair`       | —                        | `void`  | Reconstruct missing atoms  |
 | `addHydrogens` | `config?: HydroConfig`   | `void`  | Add hydrogen atoms         |
+| `relax`        | `config?: RelaxConfig`   | `void`  | Energy-minimize coordinates |
 | `solvate`      | `config?: SolvateConfig` | `void`  | Add water box and ions     |
 
 #### Transform Methods
@@ -180,6 +182,15 @@ Residue template for custom ligand topology.
 | `targetCharge`   | `number`                                             | `0`         | Target net charge after solvation        |
 | `rngSeed`        | `number \| undefined`                                | `undefined` | Random seed for reproducible placement   |
 
+### RelaxConfig
+
+| Property         | Type      | Default | Description                                                        |
+| ---------------- | --------- | ------- | ------------------------------------------------------------------ |
+| `maxSteps`       | `number`  | `200`   | Maximum steepest-descent minimization steps                        |
+| `sideChainsOnly` | `boolean` | `true`  | Relax side-chain heavy atoms only (`false` = full heavy-atom mode) |
+| `convergence`    | `number`  | `1.0`   | RMS-gradient convergence threshold (kcal mol⁻¹ Å⁻¹)                |
+| `vdwCutoff`      | `number`  | `10.0`  | Lennard-Jones non-bonded cutoff distance (Å)                       |
+
 ### TopologyConfig
 
 | Property          | Type     | Default | Description               |
@@ -231,6 +242,7 @@ const structure = Structure.fromPdb(pdbContent);
 structure.clean({ removeWater: true, removeIons: true });
 structure.repair();
 structure.addHydrogens({ hisStrategy: "hid", targetPh: 7.4 });
+structure.relax({ maxSteps: 300, convergence: 0.8 });
 
 const output = structure.toPdb();
 ```
@@ -240,6 +252,7 @@ const output = structure.toPdb();
 ```typescript
 const structure = Structure.fromPdb(pdbContent);
 structure.clean({ removeWater: true });
+structure.relax();
 
 structure.solvate({
   margin: 12.0,

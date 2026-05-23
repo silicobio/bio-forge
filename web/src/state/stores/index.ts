@@ -15,6 +15,7 @@ export {
   usePipelineStore,
   selectCleanConfig,
   selectRepairConfig,
+  selectRelaxConfig,
   selectHydroConfig,
   selectSolvateConfig,
   selectTopologyConfig,

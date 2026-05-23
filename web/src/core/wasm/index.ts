@@ -9,6 +9,7 @@ export {
   cleanStructure,
   repairStructure,
   addHydrogens,
+  relaxStructure,
   solvateStructure,
   buildTopology,
 } from "./structure";
@@ -30,6 +31,7 @@ export type {
   CleanConfig,
   HydroConfig,
   HisStrategy,
+  RelaxConfig,
   SolvateConfig,
   CationSpecies,
   AnionSpecies,

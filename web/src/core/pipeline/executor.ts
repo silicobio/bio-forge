@@ -8,6 +8,7 @@ import {
   cleanStructure,
   repairStructure,
   addHydrogens,
+  relaxStructure,
   solvateStructure,
   buildTopology,
   getStructureInfo,
@@ -19,6 +20,7 @@ import {
   type PipelineConfig,
   toCleanConfig,
   toHydroConfig,
+  toRelaxConfig,
   toSolvateConfig,
   toTopologyConfig,
 } from "./config";
@@ -88,12 +90,17 @@ export function executePipeline(
       addHydrogens(structure, toHydroConfig(config.hydro.settings));
     }
 
-    // Step 4: Solvate
+    // Step 4: Relax
+    if (config.relax.enabled) {
+      relaxStructure(structure, toRelaxConfig(config.relax.settings));
+    }
+
+    // Step 5: Solvate
     if (config.solvate.enabled) {
       solvateStructure(structure, toSolvateConfig(config.solvate.settings));
     }
 
-    // Step 5: Build topology
+    // Step 6: Build topology
     let bondCount: number | undefined;
     if (config.topology.enabled) {
       const wasmTemplates = templates?.map((t) => t.template);
