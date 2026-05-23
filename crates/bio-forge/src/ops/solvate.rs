@@ -316,13 +316,10 @@ pub fn solvate_structure(structure: &mut Structure, config: &SolvateConfig) -> R
 
     let mut water_positions = Vec::with_capacity(new_waters.len());
     solvent_chain.reserve(new_waters.len());
-    let mut res_id_counter = 1;
-
-    for mut residue in new_waters {
+    for (res_id_counter, mut residue) in (1..).zip(new_waters) {
         residue.id = res_id_counter;
         solvent_chain.add_residue(residue);
         water_positions.push(res_id_counter);
-        res_id_counter += 1;
     }
 
     replace_with_ions(
