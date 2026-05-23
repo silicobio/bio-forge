@@ -9,9 +9,8 @@ use bio_forge::io::{
 };
 use bio_forge::ops::{
     Anion as CoreAnion, Cation as CoreCation, CleanConfig as CoreCleanConfig,
-    HisStrategy as CoreHisStrategy, HydroConfig as CoreHydroConfig,
-    RelaxConfig as CoreRelaxConfig, SolvateConfig as CoreSolvateConfig, TopologyBuilder,
-    Transform as CoreTransform,
+    HisStrategy as CoreHisStrategy, HydroConfig as CoreHydroConfig, RelaxConfig as CoreRelaxConfig,
+    SolvateConfig as CoreSolvateConfig, TopologyBuilder, Transform as CoreTransform,
     add_hydrogens as core_add_hydrogens, clean_structure as core_clean_structure,
     relax_structure as core_relax_structure, repair_structure as core_repair_structure,
     solvate_structure as core_solvate_structure,

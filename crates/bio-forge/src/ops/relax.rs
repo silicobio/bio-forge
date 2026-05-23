@@ -99,18 +99,18 @@ fn bond_force_constant(e1: Element, e2: Element) -> f64 {
     let p = Element::P as u8;
 
     match (key, other) {
-        (k, o2) if k == h && o2 == c => 340.0,  // C-H
-        (k, o2) if k == h && o2 == n => 434.0,  // N-H
-        (k, o2) if k == h && o2 == o => 553.0,  // O-H
-        (k, o2) if k == h && o2 == s => 274.0,  // S-H
-        (k, o2) if k == c && o2 == c => 310.0,  // C-C
-        (k, o2) if k == c && o2 == n => 337.0,  // C-N
-        (k, o2) if k == c && o2 == o => 570.0,  // C-O (use carbonyl; also handles C-OH)
-        (k, o2) if k == c && o2 == s => 227.0,  // C-S
-        (k, o2) if k == n && o2 == o => 370.0,  // N-O
-        (k, o2) if k == c && o2 == p => 230.0,  // C-P
-        (k, o2) if k == o && o2 == p => 525.0,  // O-P
-        _ => 300.0,                              // generic fallback
+        (k, o2) if k == h && o2 == c => 340.0, // C-H
+        (k, o2) if k == h && o2 == n => 434.0, // N-H
+        (k, o2) if k == h && o2 == o => 553.0, // O-H
+        (k, o2) if k == h && o2 == s => 274.0, // S-H
+        (k, o2) if k == c && o2 == c => 310.0, // C-C
+        (k, o2) if k == c && o2 == n => 337.0, // C-N
+        (k, o2) if k == c && o2 == o => 570.0, // C-O (use carbonyl; also handles C-OH)
+        (k, o2) if k == c && o2 == s => 227.0, // C-S
+        (k, o2) if k == n && o2 == o => 370.0, // N-O
+        (k, o2) if k == c && o2 == p => 230.0, // C-P
+        (k, o2) if k == o && o2 == p => 525.0, // O-P
+        _ => 300.0,                            // generic fallback
     }
 }
 
@@ -253,8 +253,7 @@ fn build_system(structure: &Structure, config: &RelaxConfig) -> MinSystem {
 
                 let can_move = if is_standard {
                     if config.side_chains_only {
-                        !is_backbone_atom(&atom.name)
-                            && atom.element != Element::H // keep hydrogens fixed too
+                        !is_backbone_atom(&atom.name) && atom.element != Element::H // keep hydrogens fixed too
                     } else {
                         atom.element != Element::H
                     }
@@ -731,7 +730,8 @@ fn minimize(sys: &mut MinSystem, config: &RelaxConfig) -> (u32, bool) {
 fn write_back(sys: &MinSystem, structure: &mut Structure) {
     // Build a flat list of mutable atom references in the same order as atom_map.
     // We traverse chains/residues/atoms in the same order used in `build_system`.
-    let mut flat_atoms: Vec<*mut crate::model::atom::Atom> = Vec::with_capacity(sys.positions.len());
+    let mut flat_atoms: Vec<*mut crate::model::atom::Atom> =
+        Vec::with_capacity(sys.positions.len());
     for chain in structure.iter_chains_mut() {
         for residue in chain.iter_residues_mut() {
             for atom in residue.iter_atoms_mut() {
@@ -861,13 +861,7 @@ mod tests {
         // treated as fixed, returning an error.
         let mut structure = Structure::new();
         let mut chain = Chain::new("A");
-        let mut residue = Residue::new(
-            1,
-            None,
-            "HOH",
-            None,
-            ResidueCategory::Hetero,
-        );
+        let mut residue = Residue::new(1, None, "HOH", None, ResidueCategory::Hetero);
         residue.add_atom(Atom::new(
             "O",
             Element::O,
@@ -895,7 +889,14 @@ mod tests {
 
     #[test]
     fn vdw_params_returns_positive_values() {
-        for elem in [Element::C, Element::N, Element::O, Element::S, Element::H, Element::P] {
+        for elem in [
+            Element::C,
+            Element::N,
+            Element::O,
+            Element::S,
+            Element::H,
+            Element::P,
+        ] {
             let (r, eps) = vdw_params(elem);
             assert!(r > 0.0, "r_min/2 must be positive for {:?}", elem);
             assert!(eps > 0.0, "epsilon must be positive for {:?}", elem);
@@ -915,12 +916,32 @@ mod tests {
             ResidueCategory::Standard,
         );
         // Add backbone atoms (should be fixed).
-        res.add_atom(Atom::new("N",  Element::N, nalgebra::Point3::new(-0.966, 0.493, 1.500)));
-        res.add_atom(Atom::new("CA", Element::C, nalgebra::Point3::new( 0.257, 0.418, 0.692)));
-        res.add_atom(Atom::new("C",  Element::C, nalgebra::Point3::new(-0.094, 0.017,-0.716)));
-        res.add_atom(Atom::new("O",  Element::O, nalgebra::Point3::new(-1.056,-0.682,-0.923)));
+        res.add_atom(Atom::new(
+            "N",
+            Element::N,
+            nalgebra::Point3::new(-0.966, 0.493, 1.500),
+        ));
+        res.add_atom(Atom::new(
+            "CA",
+            Element::C,
+            nalgebra::Point3::new(0.257, 0.418, 0.692),
+        ));
+        res.add_atom(Atom::new(
+            "C",
+            Element::C,
+            nalgebra::Point3::new(-0.094, 0.017, -0.716),
+        ));
+        res.add_atom(Atom::new(
+            "O",
+            Element::O,
+            nalgebra::Point3::new(-1.056, -0.682, -0.923),
+        ));
         // Side chain atom (should be movable).
-        res.add_atom(Atom::new("CB", Element::C, nalgebra::Point3::new( 1.204,-0.620, 1.296)));
+        res.add_atom(Atom::new(
+            "CB",
+            Element::C,
+            nalgebra::Point3::new(1.204, -0.620, 1.296),
+        ));
         chain.add_residue(res);
         structure.add_chain(chain);
 
@@ -949,12 +970,32 @@ mod tests {
             Some(crate::model::types::StandardResidue::ALA),
             ResidueCategory::Standard,
         );
-        res1.add_atom(Atom::new("N",  Element::N, nalgebra::Point3::new(-0.966, 0.493, 1.500)));
-        res1.add_atom(Atom::new("CA", Element::C, nalgebra::Point3::new( 0.257, 0.418, 0.692)));
-        res1.add_atom(Atom::new("C",  Element::C, nalgebra::Point3::new(-0.094, 0.017,-0.716)));
-        res1.add_atom(Atom::new("O",  Element::O, nalgebra::Point3::new(-1.056,-0.682,-0.923)));
+        res1.add_atom(Atom::new(
+            "N",
+            Element::N,
+            nalgebra::Point3::new(-0.966, 0.493, 1.500),
+        ));
+        res1.add_atom(Atom::new(
+            "CA",
+            Element::C,
+            nalgebra::Point3::new(0.257, 0.418, 0.692),
+        ));
+        res1.add_atom(Atom::new(
+            "C",
+            Element::C,
+            nalgebra::Point3::new(-0.094, 0.017, -0.716),
+        ));
+        res1.add_atom(Atom::new(
+            "O",
+            Element::O,
+            nalgebra::Point3::new(-1.056, -0.682, -0.923),
+        ));
         // CB placed extremely close to N of another residue to create a clash.
-        res1.add_atom(Atom::new("CB", Element::C, nalgebra::Point3::new(-0.900, 0.480, 1.490)));
+        res1.add_atom(Atom::new(
+            "CB",
+            Element::C,
+            nalgebra::Point3::new(-0.900, 0.480, 1.490),
+        ));
 
         let mut res2 = Residue::new(
             2,
@@ -963,11 +1004,31 @@ mod tests {
             Some(crate::model::types::StandardResidue::ALA),
             ResidueCategory::Standard,
         );
-        res2.add_atom(Atom::new("N",  Element::N, nalgebra::Point3::new(-0.966, 0.493, 1.500)));
-        res2.add_atom(Atom::new("CA", Element::C, nalgebra::Point3::new( 0.257, 0.418, 0.692)));
-        res2.add_atom(Atom::new("C",  Element::C, nalgebra::Point3::new(-0.094, 0.017,-0.716)));
-        res2.add_atom(Atom::new("O",  Element::O, nalgebra::Point3::new(-1.056,-0.682,-0.923)));
-        res2.add_atom(Atom::new("CB", Element::C, nalgebra::Point3::new( 1.204,-0.620, 1.296)));
+        res2.add_atom(Atom::new(
+            "N",
+            Element::N,
+            nalgebra::Point3::new(-0.966, 0.493, 1.500),
+        ));
+        res2.add_atom(Atom::new(
+            "CA",
+            Element::C,
+            nalgebra::Point3::new(0.257, 0.418, 0.692),
+        ));
+        res2.add_atom(Atom::new(
+            "C",
+            Element::C,
+            nalgebra::Point3::new(-0.094, 0.017, -0.716),
+        ));
+        res2.add_atom(Atom::new(
+            "O",
+            Element::O,
+            nalgebra::Point3::new(-1.056, -0.682, -0.923),
+        ));
+        res2.add_atom(Atom::new(
+            "CB",
+            Element::C,
+            nalgebra::Point3::new(1.204, -0.620, 1.296),
+        ));
 
         chain.add_residue(res1);
         chain.add_residue(res2);
@@ -1001,10 +1062,26 @@ mod tests {
             Some(crate::model::types::StandardResidue::GLY),
             ResidueCategory::Standard,
         );
-        res.add_atom(Atom::new("N",  Element::N, nalgebra::Point3::new(-0.966, 0.493, 1.500)));
-        res.add_atom(Atom::new("CA", Element::C, nalgebra::Point3::new( 0.257, 0.418, 0.692)));
-        res.add_atom(Atom::new("C",  Element::C, nalgebra::Point3::new(-0.094, 0.017,-0.716)));
-        res.add_atom(Atom::new("O",  Element::O, nalgebra::Point3::new(-1.056,-0.682,-0.923)));
+        res.add_atom(Atom::new(
+            "N",
+            Element::N,
+            nalgebra::Point3::new(-0.966, 0.493, 1.500),
+        ));
+        res.add_atom(Atom::new(
+            "CA",
+            Element::C,
+            nalgebra::Point3::new(0.257, 0.418, 0.692),
+        ));
+        res.add_atom(Atom::new(
+            "C",
+            Element::C,
+            nalgebra::Point3::new(-0.094, 0.017, -0.716),
+        ));
+        res.add_atom(Atom::new(
+            "O",
+            Element::O,
+            nalgebra::Point3::new(-1.056, -0.682, -0.923),
+        ));
         chain.add_residue(res);
         structure.add_chain(chain);
 

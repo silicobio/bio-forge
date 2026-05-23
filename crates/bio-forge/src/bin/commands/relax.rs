@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Args;
 
 use bio_forge::Structure;
-use bio_forge::ops::{RelaxConfig, relax_structure, Error as OpError};
+use bio_forge::ops::{Error as OpError, RelaxConfig, relax_structure};
 
 use crate::commands::run_with_spinner;
 
@@ -39,7 +39,11 @@ pub fn run(structure: &mut Structure, args: &RelaxArgs) -> Result<()> {
         vdw_cutoff: args.vdw_cutoff,
     };
 
-    let scope = if config.side_chains_only { "side chains" } else { "full structure" };
+    let scope = if config.side_chains_only {
+        "side chains"
+    } else {
+        "full structure"
+    };
     let message = format!("Relaxing {scope} ({} steps max)", config.max_steps);
 
     let result = run_with_spinner(&message, || {
