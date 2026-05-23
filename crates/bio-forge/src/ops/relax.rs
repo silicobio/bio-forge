@@ -47,7 +47,7 @@ const STEP_SHRINK: f64 = 0.5;
 const STEP_GROW: f64 = 1.2;
 /// Maximum step size allowed during line search (Å).
 const MAX_STEP_SIZE: f64 = 0.10;
-/// Minimum step size before aborting the minimisation (Å).
+/// Minimum step size before aborting the minimization (Å).
 const MIN_STEP_SIZE: f64 = 1e-6;
 /// Number of spatial degrees of freedom per atom (x, y, z).
 const SPATIAL_DIMS: usize = 3;
@@ -178,7 +178,7 @@ pub struct RelaxResult {
     pub converged: bool,
 }
 
-// ─── Internal minimisation system ────────────────────────────────────────────
+// ─── Internal minimization system ────────────────────────────────────────────
 
 /// Harmonic bond potential term.
 #[derive(Debug, Clone, Copy)]
@@ -672,7 +672,7 @@ fn rms_gradient(grad: &[Vector3<f64>], movable: &[bool]) -> f64 {
     (sum_sq / count as f64).sqrt()
 }
 
-// ─── Steepest-descent minimiser ───────────────────────────────────────────────
+// ─── Steepest-descent minimizer ───────────────────────────────────────────────
 
 /// Runs the steepest-descent loop and returns the number of steps taken.
 fn minimize(sys: &mut MinSystem, config: &RelaxConfig) -> (u32, bool) {
